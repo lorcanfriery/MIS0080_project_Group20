@@ -1,10 +1,8 @@
-# Reads two data CSVs (GDP + Inflation) and writes one tidy file
 import pandas as pd
 from pathlib import Path
 
-# file locations
 DATA_DIR = Path("DATA")
-GDP_FILE = DATA_DIR / "gdp_data.csv"   # make sure this filename matches yours
+GDP_FILE = DATA_DIR / "gdp_data.csv"  
 INF_FILE = DATA_DIR / "inf_data.csv"
 OUT_FILE = DATA_DIR / "macro_data.csv"
 
@@ -12,11 +10,6 @@ START_YEAR = 2000
 END_YEAR = 2024
 
 def read_wb_wide(path: Path, value_name: str) -> pd.DataFrame:
-    """
-    Read a World Bank 'API_...csv' file.
-    WB puts 3–4 metadata lines before the header row. We try skiprows=4 then 3.
-    """
-    # Try common WB patterns
     last_err = None
     for skip in (4, 3, 0):
         try:
@@ -38,7 +31,7 @@ def read_wb_wide(path: Path, value_name: str) -> pd.DataFrame:
             f"Tried skiprows 4/3/0. Last error: {last_err}"
         )
 
-    # Year columns look like "1960","1961",...
+  
     year_cols = [c for c in df.columns if str(c).isdigit()]
     if not year_cols:
         raise RuntimeError(f"No year columns found in {path}.")
@@ -56,7 +49,7 @@ def read_wb_wide(path: Path, value_name: str) -> pd.DataFrame:
 
 
 def main():
-    # read both files
+
     gdp_df = read_wb_wide(GDP_FILE, "gdp_growth")
     inf_df = read_wb_wide(INF_FILE, "inflation")
 
