@@ -11,10 +11,10 @@ fred = Fred(api_key="e5f01fd50421590fffaebf8fec19052a")
 
 # Currency data ~ If data in terms of 1 USD = True, if not = False
 currencies = {
-    "EURUSD": {"fred_id": "DEXUSEU", "is_usd_based": False},
-    "GBPUSD": {"fred_id": "DEXUSUK", "is_usd_based": False},
+    "USDEUR": {"fred_id": "DEXUSEU", "is_usd_based": False},
+    "USDGBP": {"fred_id": "DEXUSUK", "is_usd_based": False},
     "USDJPY": {"fred_id": "DEXJPUS", "is_usd_based": True},
-    "AUDUSD": {"fred_id": "DEXUSAL", "is_usd_based": False},
+    "USDAUD": {"fred_id": "DEXUSAL", "is_usd_based": False},
     "USDCAD": {"fred_id": "DEXCAUS", "is_usd_based": True},
     "USDCHF": {"fred_id": "DEXSZUS", "is_usd_based": True},
 }
@@ -68,8 +68,9 @@ for pair, meta in currencies.items():
 
 # Drop rows where all FX levels are Na
 fx_levels = fx_levels.dropna(how="all")
-print("Raw FX levels:")
-print(fx_levels.head())
+if fx_levels.empty:
+    st.warning("No FX data available for this date range. Try a longer range.")
+    st.stop()
 
 #Calculate daily returns in USD terms
 usd_ret = pd.DataFrame(index=fx_levels.index)
@@ -85,8 +86,6 @@ usd_index = (1 + usd_ret).cumprod()
 
 # Overall % change from START to END
 usd_change_pct = (usd_index.iloc[-1] - 1) * 100
-print("\nUSD strength change over period (%):")
-print(usd_change_pct)
 
 # Visualization (Horizontal Bar Chart)
 pairs = usd_change_pct.index.tolist()
@@ -112,4 +111,45 @@ for bar, val in zip(bars, values):
 
 fig.tight_layout()
 st.pyplot(fig)
+
+# Additional individual currency history plot
+st.subheader("Individual currency history")
+
+#User choices of currency and raw vs % change
+currency_choice = st.selectbox(
+    "Select a currency to view its FX history",
+    fx_levels.columns.tolist(),
+)
+
+normalize = st.checkbox(
+    "Show % change from start instead of raw FX rate",
+    value=True,
+)
+
+# Line chart of selected currency
+series = fx_levels[currency_choice].dropna()
+if series.empty:
+    st.warning("No data available for this currency in the selected date range.")
+else:
+    if normalize:
+        
+        base = series.iloc[0]
+        series_to_plot = (series / base - 1) * 100
+        ylabel = "% change vs start"
+        title_extra = " (% change from start)"
+    else:
+        series_to_plot = series
+        ylabel = "FX rate (as per FRED series)"
+        title_extra = ""
+
+    # Plotting the additional line chart with matplotlib
+    fig2, ax2 = plt.subplots(figsize=(8, 4))
+    ax2.plot(series_to_plot.index, series_to_plot.values)
+    ax2.set_title(f"{currency_choice} – FX history{title_extra}")
+    ax2.set_xlabel("Date")
+    ax2.set_ylabel(ylabel)
+    fig2.tight_layout()
+
+    st.pyplot(fig2)
+
 
