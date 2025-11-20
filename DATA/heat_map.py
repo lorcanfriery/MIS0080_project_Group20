@@ -36,13 +36,15 @@ if mode=="Year range":
     (min_year, max_year)
 )
     year_filter=(df["year"] >= year_range[0]) & (df["year"] <= year_range[1])
+    year_text=f"from {year_range[0]} to {year_range[1]}"
 
 else:
-    single_year=st.selectbox(
+    selected_year=st.selectbox(
     "Select year:",
     sorted(df["year"].unique())
     )
-    year_filter=(df["year"] == single_year)
+    year_filter=(df["year"] == selected_year)
+    year_text=str(selected_year)
 
 all_countries = sorted(df["country"].unique())
 
@@ -58,13 +60,17 @@ selected_countries = st.multiselect(
 
 if len(selected_countries) < 2:
     st.info("Please select at least two countries to display the heatmap.")
-else:
-    df_sel=df[df["country"].isin(selected_countries)].copy()
-    df_sel = df[
+    st.stop()
+
+df_sel=df[
     (df["country"].isin(selected_countries)) &
-    (df["year"] >= year_range[0]) &
-    (df["year"] <= year_range[1])
-].copy()
+    year_filter
+    ].copy()
+
+if df_sel.empty:
+    st.warning(f"No data available for the selected countries {year_text}. Please adjust your selection.")
+    st.stop()
+
 # Pivot data so each country becomes a column
 pivot = df_sel.pivot(index="year", columns="country", values=metric)
 
@@ -72,17 +78,22 @@ pivot = pivot.dropna(axis=1, how="all")
 
 if pivot.shape[1] < 2:
     st.warning("Not enough data to compute correlations for the selected countries.")
-else:
+    st.stop()
+
 # Compute correlation between countries
-    corr = pivot.corr()
+corr = pivot.corr()
 
 if corr.isna().all().all():
     st.warning("Correlation could not be computed (too many missing values). Try fewer countries.")
+    st.stop()
 
-else:
 # Plot heatmap
-    fig, ax = plt.subplots(figsize=(10, 8))
-    sns.heatmap(corr, cmap="coolwarm", annot=False, fmt=".2f", vmin=-1, vmax=1, ax=ax)
-    ax.set_title(f"Correlation Heatmap for {metric.replace('_', ' ').title()}")
+fig, ax = plt.subplots(figsize=(10, 8))
+sns.heatmap(corr, cmap="coolwarm", annot=False, fmt=".2f", vmin=-1, vmax=1, ax=ax)
+ax.set_title(f"Correlation Heatmap for {metric.replace('_', ' ').title()}")
 
-    st.pyplot(fig)
+st.pyplot(fig)
+st.caption(
+    f"Correlations are Pearson correlations of {metric.replace('_', ' ')} "
+    f"between selected countries using data from {year_text}."
+)
