@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 
 # Load your dataset
 df = pd.read_csv(r'C:\Users\lorca\Downloads\Programming project\DATA\macro_data.csv')
@@ -108,6 +109,39 @@ if corr.isna().all().all():
 fig, ax = plt.subplots(figsize=(10, 8))
 sns.heatmap(corr, cmap="coolwarm", annot=True, fmt=".2f", vmin=-1, vmax=1, ax=ax)
 ax.set_title(f"Correlation Heatmap for {metric.replace('_', ' ').title()}")
+
+# ---- Optional: text summary of strongest / weakest correlations ----
+# Work on a copy so we can safely rename axes
+corr_for_pairs = corr.copy()
+corr_for_pairs.index.name = "Country A"
+corr_for_pairs.columns.name = "Country B"
+
+# Mask upper triangle (keep only each pair once)
+mask = np.triu(np.ones_like(corr_for_pairs, dtype=bool), k=1)
+corr_lower = corr_for_pairs.mask(mask)
+
+# Turn into long table: Country A, Country B, corr_value
+corr_pairs = (
+    corr_lower
+    .stack()
+    .reset_index(name="corr_value")
+)
+
+if not corr_pairs.empty:
+    best = corr_pairs.loc[corr_pairs["corr_value"].idxmax()]
+    worst = corr_pairs.loc[corr_pairs["corr_value"].idxmin()]
+
+    st.write(
+        f"**Strongest positive correlation:** "
+        f"{best['Country A']} & {best['Country B']} ({best['corr_value']:.2f})"
+    )
+    st.write(
+        f"**Weakest (most negative) correlation:** "
+        f"{worst['Country A']} & {worst['Country B']} ({worst['corr_value']:.2f})"
+    )
+
+
+
 
 st.pyplot(fig)
 st.caption(
