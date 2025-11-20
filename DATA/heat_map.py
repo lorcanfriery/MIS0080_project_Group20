@@ -1,5 +1,4 @@
 import streamlit as st
-
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -48,17 +47,33 @@ else:
     year_text = f"{selected_year} (window {start_year}–{end_year})"
 
 
+# ---- Country presets ----
 all_countries = sorted(df["country"].unique())
 
-default_list={c for c in all_countries if c in ["United States", "China", "India", "Germany", "Brazil"]}
-if len(default_list) < 2:
-    default_list = set(all_countries[:5])
+group = st.selectbox(
+    "Quick country group:",
+    ["Custom selection", "BRICS", "G7", "Euro Area Core"]
+)
 
-selected_countries = st.multiselect(  
+groups = {
+    "BRICS": ["Brazil", "Russian Federation", "India", "China", "South Africa"],
+    "G7": ["United States", "United Kingdom", "Germany", "France", "Italy", "Canada", "Japan"],
+    "Euro Area Core": ["Germany", "France", "Belgium", "Netherlands", "Italy", "Spain"]
+}
+
+# Set default list depending on preset
+if group == "Custom selection":
+    default_list = ["United States", "China", "India", "Germany", "Brazil"]
+else:
+    default_list = [c for c in all_countries if c in groups[group]]
+
+# ---- Country multi-select ----
+selected_countries = st.multiselect(
     "Select countries (at least 2):",
     all_countries,
-    default=list(default_list)
+    default=default_list
 )
+
 
 if len(selected_countries) < 2:
     st.info("Please select at least two countries to display the heatmap.")
