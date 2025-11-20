@@ -46,7 +46,11 @@ if len(selected_countries) < 2:
     st.info("Please select at least two countries to display the heatmap.")
 else:
     df_sel=df[df["country"].isin(selected_countries)].copy()
-
+    df_sel = df[
+    (df["country"].isin(selected_countries)) &
+    (df["year"] >= year_range[0]) &
+    (df["year"] <= year_range[1])
+].copy()
 # Pivot data so each country becomes a column
 pivot = df_sel.pivot(index="year", columns="country", values=metric)
 
