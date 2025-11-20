@@ -91,7 +91,7 @@ if corr.isna().all().all():
 
 # Plot heatmap
 fig, ax = plt.subplots(figsize=(10, 8))
-sns.heatmap(corr, cmap="coolwarm", annot=False, fmt=".2f", vmin=-1, vmax=1, ax=ax)
+sns.heatmap(corr, cmap="coolwarm", annot=True, fmt=".2f", vmin=-1, vmax=1, ax=ax)
 ax.set_title(f"Correlation Heatmap for {metric.replace('_', ' ').title()}")
 
 st.pyplot(fig)
@@ -99,5 +99,4 @@ st.caption(
     f"Correlations are Pearson correlations of {metric.replace('_', ' ')} "
     f"between selected countries using data from {year_text}."
 )
-st.subheader("Correlation values")
-st.dataframe(corr.round(2))
+
