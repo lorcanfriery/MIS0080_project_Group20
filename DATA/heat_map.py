@@ -18,6 +18,18 @@ metric = st.radio(
     format_func=lambda m: "GDP growth" if m == "gdp_growth" else "Inflation"
 )
 
+
+#Choose year range
+min_year = int(df["year"].min())
+max_year = int(df["year"].max())
+
+year_range = st.slider(
+    "Select year range:",
+    min_year,
+    max_year,
+    (min_year, max_year)
+)
+
 all_countries = sorted(df["country"].unique())
 
 default_list={c for c in all_countries if c in ["United States", "China", "India", "Germany", "Brazil"]}
