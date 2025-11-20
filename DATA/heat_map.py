@@ -17,18 +17,32 @@ metric = st.radio(
     ["gdp_growth", "inflation"],
     format_func=lambda m: "GDP growth" if m == "gdp_growth" else "Inflation"
 )
+#toggle between single year and miltiple years
+mode = st.radio(
+    "Select correlation mode:",
+    ["Single year", "Year range"]
+)
 
 
 #Choose year range
 min_year = int(df["year"].min())
 max_year = int(df["year"].max())
 
-year_range = st.slider(
+if mode=="Year range":
+    year_range = st.slider(
     "Select year range:",
     min_year,
     max_year,
     (min_year, max_year)
 )
+    year_filter=(df["year"] >= year_range[0]) & (df["year"] <= year_range[1])
+
+else:
+    single_year=st.selectbox(
+    "Select year:",
+    sorted(df["year"].unique())
+    )
+    year_filter=(df["year"] == single_year)
 
 all_countries = sorted(df["country"].unique())
 
