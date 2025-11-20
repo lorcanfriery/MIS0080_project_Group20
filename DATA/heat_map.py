@@ -20,31 +20,33 @@ metric = st.radio(
 #toggle between single year and miltiple years
 mode = st.radio(
     "Select correlation mode:",
-    ["Single year", "Year range"]
+    ["Single year (±1 year window)", "Year range"]
 )
 
-
-#Choose year range
 min_year = int(df["year"].min())
 max_year = int(df["year"].max())
 
-if mode=="Year range":
+if mode == "Year range":
     year_range = st.slider(
-    "Select year range:",
-    min_year,
-    max_year,
-    (min_year, max_year)
-)
-    year_filter=(df["year"] >= year_range[0]) & (df["year"] <= year_range[1])
-    year_text=f"from {year_range[0]} to {year_range[1]}"
+        "Select year range:",
+        min_year,
+        max_year,
+        (min_year, max_year)
+    )
+    year_filter = (df["year"] >= year_range[0]) & (df["year"] <= year_range[1])
+    year_text = f"{year_range[0]}–{year_range[1]}"
 
 else:
-    selected_year=st.selectbox(
-    "Select year:",
-    sorted(df["year"].unique())
+    selected_year = st.selectbox(
+        "Select centre year:",
+        sorted(df["year"].unique())
     )
-    year_filter=(df["year"] == selected_year)
-    year_text=str(selected_year)
+    # use a small window around that year
+    start_year = max(min_year, selected_year - 1)
+    end_year = min(max_year, selected_year + 1)
+    year_filter = (df["year"] >= start_year) & (df["year"] <= end_year)
+    year_text = f"{selected_year} (window {start_year}–{end_year})"
+
 
 all_countries = sorted(df["country"].unique())
 
