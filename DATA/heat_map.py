@@ -99,3 +99,5 @@ st.caption(
     f"Correlations are Pearson correlations of {metric.replace('_', ' ')} "
     f"between selected countries using data from {year_text}."
 )
+st.subheader("Correlation values")
+st.dataframe(corr.round(2))
