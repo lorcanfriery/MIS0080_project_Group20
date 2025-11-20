@@ -14,10 +14,24 @@ metric = st.radio(
     "Select a metric:",
     ["gdp_growth", "inflation"]
 )
+all_countries = sorted(df["country"].unique())
+selected_countries = st.multiselect(
+    "Select countries (at least 2):",
+    all_countries,
+    default=all_countries[:5])
+
+if len(selected_countries) < 2:
+    st.info("Please select at least two countries to see the correlation heatmap.")
+else:
+    # Filter data to selected countries only
+    df_sel = df[df["country"].isin(selected_countries)]
+
+
 
 # Pivot data so each country becomes a column
 pivot = df.pivot(index="year", columns="country", values=metric)
 
+pivot = pivot.dropna(how="any")
 # Compute correlation between countries
 corr = pivot.corr()
 
