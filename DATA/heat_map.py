@@ -110,25 +110,32 @@ fig, ax = plt.subplots(figsize=(10, 8))
 sns.heatmap(corr, cmap="coolwarm", annot=True, fmt=".2f", vmin=-1, vmax=1, ax=ax)
 ax.set_title(f"Correlation Heatmap for {metric.replace('_', ' ').title()}")
 
-# ---- Optional: text summary of strongest / weakest correlations ----
-# Work on a copy so we can safely rename axes
+#Insight summary of strongest / weakest correlations 
+
 corr_for_pairs = corr.copy()
 corr_for_pairs.index.name = "Country A"
 corr_for_pairs.columns.name = "Country B"
 
-# Mask upper triangle (keep only each pair once)
-mask = np.triu(np.ones_like(corr_for_pairs, dtype=bool), k=1)
+# Remove diagonal (self-correlations)
+np.fill_diagonal(corr_for_pairs.values, np.nan)
+
+
+mask = np.triu(np.ones_like(corr_for_pairs, dtype=bool))
 corr_lower = corr_for_pairs.mask(mask)
 
-# Turn into long table: Country A, Country B, corr_value
+
 corr_pairs = (
-    corr_lower
-    .stack()
+    corr_lower.stack()
     .reset_index(name="corr_value")
+    .dropna(subset=["corr_value"])
 )
 
+
 if not corr_pairs.empty:
+   
     best = corr_pairs.loc[corr_pairs["corr_value"].idxmax()]
+
+  
     worst = corr_pairs.loc[corr_pairs["corr_value"].idxmin()]
 
     st.write(
@@ -139,6 +146,7 @@ if not corr_pairs.empty:
         f"**Weakest (most negative) correlation:** "
         f"{worst['Country A']} & {worst['Country B']} ({worst['corr_value']:.2f})"
     )
+
 
 
 
