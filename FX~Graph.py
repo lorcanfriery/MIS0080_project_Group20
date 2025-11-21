@@ -101,13 +101,17 @@ ax.axvline(0, color="black", linewidth=0.8)
 ax.set_xlabel("Change in USD strength vs currency (%)")
 ax.set_title(f"USD vs World — FX Performance ({START} to {END})")
 
-# Adding % labels at the end of each bar
+# Adding % labels to the centre of each bar
 for bar, val in zip(bars, values):
-    x = bar.get_width()
-    y = bar.get_y() + bar.get_height() / 2
-    offset = 0.3 if val >= 0 else -0.3
-    ha = "left" if val >= 0 else "right"
-    ax.text(x + offset, y, f"{val:.1f}%", va="center", ha=ha)
+    ax.text(
+        bar.get_width() / 2,                   
+        bar.get_y() + bar.get_height() / 2,     
+        f"{val:.1f}%",va="center",
+        ha="center",
+        color="white",                           
+        fontsize=10,fontweight="bold"
+    )
+
 
 fig.tight_layout()
 st.pyplot(fig)

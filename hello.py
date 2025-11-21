@@ -65,20 +65,16 @@ usd_index = (1 + usd_ret).cumprod()
 
 # Overall % change from START to END
 usd_change_pct = (usd_index.iloc[-1] - 1) * 100
-
 print("\nUSD strength change over period (%):")
 print(usd_change_pct)
 
 # Visualization (Horizontal Bar Chart)
-
 pairs = usd_change_pct.index.tolist()
 values = usd_change_pct.values
-
 fig, ax = plt.subplots(figsize=(8, 5))
-
 bars = ax.barh(pairs, values)
 
-# Color: green if USD stronger (positive), red if weaker (negative)
+# Colours:  green if USD stronger (positive), red if weaker (negative)
 for bar, val in zip(bars, values):
     bar.set_color("green" if val > 0 else "red")
 
@@ -86,13 +82,14 @@ ax.axvline(0, color="black", linewidth=0.8)
 ax.set_xlabel("Change in USD strength vs currency (%)")
 ax.set_title(f"USD vs World — FX Performance ({START} to {END})")
 
-# Add % labels at the end of each bar
+# Adding % labels at the end of each bar
 for bar, val in zip(bars, values):
     x = bar.get_width()
     y = bar.get_y() + bar.get_height() / 2
     offset = 0.3 if val >= 0 else -0.3
     ha = "left" if val >= 0 else "right"
     ax.text(x + offset, y, f"{val:.1f}%", va="center", ha=ha)
+
 
 plt.tight_layout()
 plt.show()
