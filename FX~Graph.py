@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import plotly.express as px
+from streamlit_plotly_events import plotly_events
 
 fred = Fred(api_key="e5f01fd50421590fffaebf8fec19052a")
 
@@ -87,34 +89,35 @@ usd_index = (1 + usd_ret).cumprod()
 # Overall % change from START to END
 usd_change_pct = (usd_index.iloc[-1] - 1) * 100
 
-# Visualization (Horizontal Bar Chart)
-pairs = usd_change_pct.index.tolist()
-values = usd_change_pct.values
-fig, ax = plt.subplots(figsize=(8, 5))
-bars = ax.barh(pairs, values)
+#Visualization using Plotly for interactivity
+bar_df = pd.DataFrame({
+    "Currency": usd_change_pct.index,
+    "USD_Change_Pct": usd_change_pct.values
+})
 
-# Colours:  green if USD stronger (positive), red if weaker (negative)
-for bar, val in zip(bars, values):
-    bar.set_color("green" if val > 0 else "red")
+fig_bar = px.bar(
+    bar_df,
+    x="USD_Change_Pct",
+    y="Currency",
+    orientation="h",
+    labels={
+        "USD_Change_Pct": "Change in USD Strength (%)",
+        "Currency": "Currency"
+    },
+    title=f"USD vs World – FX Performance ({START} to {END})"
+)
 
-ax.axvline(0, color="black", linewidth=0.8)
-ax.set_xlabel("Change in USD strength vs currency (%)")
-ax.set_title(f"USD vs World — FX Performance ({START} to {END})")
+fig_bar.update_traces(
+    marker_color=bar_df["USD_Change_Pct"].apply(lambda x: "green" if x >= 0 else "red")
+)
 
-# Adding % labels to the centre of each bar
-for bar, val in zip(bars, values):
-    ax.text(
-        bar.get_width() / 2,                   
-        bar.get_y() + bar.get_height() / 2,     
-        f"{val:.1f}%",va="center",
-        ha="center",
-        color="white",                           
-        fontsize=10,fontweight="bold"
-    )
+fig_bar.update_layout(
+    xaxis_title="Change (%)",
+    yaxis_title="Currency",
+    height=500
+)
 
-
-fig.tight_layout()
-st.pyplot(fig)
+st.plotly_chart(fig_bar, use_container_width=True)
 
 # Additional individual currency history plot
 st.subheader("Individual currency history")
