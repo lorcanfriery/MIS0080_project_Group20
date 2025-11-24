@@ -89,6 +89,16 @@ if df_sel.empty:
     st.warning(f"No data available for the selected countries {year_text}. Please adjust your selection.")
     st.stop()
 
+missing_pct = df_sel[metric].isna().mean() * 100
+st.caption(f"Missing{metric.replace('_', ' ')} data in this selection: {missing_pct:.1f}%")
+
+st.download_button(
+    "Download filtered data as CSV",
+    df_sel.to_csv(index=False).encode('utf-8'),
+    file_name=f"filtered_data_{metric}_{year_text}.csv",
+    mime="text/csv"
+)
+
 # Pivot data so each country becomes a column
 pivot = df_sel.pivot(index="year", columns="country", values=metric)
 
