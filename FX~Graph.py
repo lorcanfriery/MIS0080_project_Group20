@@ -114,8 +114,11 @@ fig_bar.update_traces(
 fig_bar.update_layout(
     xaxis_title="Change (%)",
     yaxis_title="Currency",
-    height=500
+    height=500,
+    dragmode=False,
+    modebar_remove=["editInChart"]
 )
+
 
 st.plotly_chart(fig_bar, use_container_width=True)
 
@@ -124,7 +127,7 @@ st.subheader("Individual currency history")
 
 #User choices of currency and raw vs % change
 currency_choice = st.selectbox(
-    "Select a currency to view its FX history",
+    "Select currency to view FX history",
     fx_levels.columns.tolist(),
 )
 
@@ -157,6 +160,6 @@ else:
     ax2.set_ylabel(ylabel)
     fig2.tight_layout()
 
-    st.pyplot(fig2)
+st.pyplot(fig2, use_container_width=True)
 
 
