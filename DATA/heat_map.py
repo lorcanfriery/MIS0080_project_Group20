@@ -112,14 +112,23 @@ if pivot.shape[1] < 2:
 corr = pivot.corr()
 
 if corr.isna().all().all():
-    st.warning("Correlation could not be computed (too many missing values). Try fewer countries.")
-    st.stop()
+    st.warning("Correlation could not be computed (too many missing values). Try different years or countries.")
 
-# Plot heatmap
-fig, ax = plt.subplots(figsize=(10, 8))
-sns.heatmap(corr, cmap="coolwarm", annot=True, fmt=".2f", vmin=-1, vmax=1, ax=ax)
-ax.set_title(f"Correlation Heatmap for {metric.replace('_', ' ').title()}")
+show_numbers=st.checkbox("Show correlation values on heatmap", value=True)
 
+fig, ax=plt.subplots(figsize=(10, 8))
+sns.heatmap(
+    corr,
+    annot=show_numbers,
+    fmt=".2f",
+    cmap="coolwarm",
+    vmin=-1,
+    vmax=1,
+    square=True,
+    cbar_kws={"label": "Pearson correlation coefficient"},
+    ax=ax
+)
+ax.set_title(f"Correlation heatmap for {metric.replace('_', ' ').title()}({year_text})")
 #Insight summary of strongest / weakest correlations 
 
 corr_for_pairs = corr.copy()
