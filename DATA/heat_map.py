@@ -171,6 +171,54 @@ if not corr_pairs.empty:
 
 
 st.pyplot(fig)
+
+# ---- Pairwise scatter plot ----
+st.subheader("Explore relationship between two countries")
+
+pair = st.multiselect(
+    "Select exactly two countries to compare:",
+    selected_countries,
+    max_selections=2
+)
+
+if len(pair) == 2:
+    # Prepare a dataset with just the two selected countries
+    pair_df = df_sel[df_sel["country"].isin(pair)].copy()
+    pair_pivot = pair_df.pivot(index="year", columns="country", values=metric)
+
+    # Drop years with missing data
+    pair_pivot = pair_pivot.dropna()
+
+    if pair_pivot.empty:
+        st.warning("Not enough overlapping data to compare these two countries.")
+    else:
+        fig2, ax2 = plt.subplots(figsize=(7, 5))
+        ax2.scatter(
+            pair_pivot[pair[0]],
+            pair_pivot[pair[1]],
+            alpha=0.7
+        )
+
+        # Fit a trend line
+        import numpy as np
+        x = pair_pivot[pair[0]]
+        y = pair_pivot[pair[1]]
+        m, b = np.polyfit(x, y, 1)
+        ax2.plot(x, m*x + b, color="red", linewidth=1.5, label="Trend line")
+
+        ax2.set_xlabel(f"{pair[0]} ({metric.replace('_', ' ')})")
+        ax2.set_ylabel(f"{pair[1]} ({metric.replace('_', ' ')})")
+        ax2.set_title(f"{metric.replace('_',' ').title()} relationship between {pair[0]} and {pair[1]}")
+        ax2.legend()
+
+        st.pyplot(fig2)
+
+
+
+
+
+
+
 st.caption(
     f"Correlations are Pearson correlations of {metric.replace('_', ' ')} "
     f"between selected countries using data from {year_text}."
