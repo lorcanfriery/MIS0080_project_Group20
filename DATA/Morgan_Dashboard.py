@@ -106,6 +106,13 @@ end_date = st.sidebar.date_input(
 
 show_table = st.sidebar.checkbox("Show data table", value=False)
 
+rolling_window = st.sidebar.slider(
+    "Rolling average window (months)",
+    min_value=1,
+    max_value=24,
+    value=6,
+)
+
 if start_date >= end_date:
     st.error("Start date must be before end date.")
     st.stop()
@@ -165,7 +172,15 @@ with tab1:
         title=f"Year-over-Year Inflation Rate (%) – {series_label}",
         labels={"DATE": "Date", "YoY_%": "YoY Inflation (%)"},
     )
-    st.plotly_chart(fig_yoy, use_container_width=True)
+    df_reset["YoY_rolling"] = df_reset["YoY_%"].rolling(window=rolling_window).mean()
+
+fig_yoy.add_scatter(
+    x=df_reset["DATE"],
+    y=df_reset["YoY_rolling"],
+    mode="lines",
+    name=f"YoY {rolling_window}-month avg",
+)
+st.plotly_chart(fig_yoy, use_container_width=True)
 
 with tab2:
     fig_level = px.line(
@@ -175,7 +190,15 @@ with tab2:
         title=f"Index Level – {series_label}",
         labels={"DATE": "Date", "IndexLevel": "Index Level"},
     )
-    st.plotly_chart(fig_level, use_container_width=True)
+    df_reset["Index_rolling"] = df_reset["IndexLevel"].rolling(window=rolling_window).mean()
+
+fig_level.add_scatter(
+    x=df_reset["DATE"],
+    y=df_reset["Index_rolling"],
+    mode="lines",
+    name=f"Index {rolling_window}-month avg",
+)
+st.plotly_chart(fig_level, use_container_width=True)
 
 with tab3:
     fig_mom = px.line(
@@ -185,7 +208,15 @@ with tab3:
         title=f"Month-over-Month Change (%) – {series_label}",
         labels={"DATE": "Date", "MoM_%": "MoM Change (%)"},
     )
-    st.plotly_chart(fig_mom, use_container_width=True)
+    df_reset["MoM_rolling"] = df_reset["MoM_%"].rolling(window=rolling_window).mean()
+
+fig_mom.add_scatter(
+    x=df_reset["DATE"],
+    y=df_reset["MoM_rolling"],
+    mode="lines",
+    name=f"MoM {rolling_window}-month avg",
+)
+st.plotly_chart(fig_mom, use_container_width=True)
 
 if show_table:
     st.dataframe(df.tail(200))
