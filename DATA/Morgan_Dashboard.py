@@ -3,7 +3,7 @@ import datetime as dt
 
 import pandas as pd
 import plotly.express as px
-import streamlit as st
+
 from pandas_datareader import data as pdr
 
 st_autorefresh(interval=60 * 60 * 1000, key="refresh")
