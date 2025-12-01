@@ -345,3 +345,6 @@ def render_event_page():
     {ev['explanation']}
     """
             )
+
+if __name__ == "main_Dashboard":
+    render_event_page()
