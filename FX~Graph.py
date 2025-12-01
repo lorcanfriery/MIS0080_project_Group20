@@ -153,6 +153,8 @@ else:
         title_extra = ""
 
     # Plotting the additional line chart with matplotlib
+    plt.style.use("dark_background")
+    
     fig2, ax2 = plt.subplots(figsize=(8, 4))
     ax2.plot(series_to_plot.index, series_to_plot.values)
     ax2.set_title(f"{currency_choice} – FX history{title_extra}")
