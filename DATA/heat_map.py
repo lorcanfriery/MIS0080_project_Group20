@@ -9,218 +9,214 @@ df = pd.read_csv(r'C:\Users\lorca\Downloads\Programming project\DATA\macro_data.
 
 df = df[df["iso3c"].str.len() == 3].copy()
 
-st.title("Global Economics – Correlation Heatmap")
+def render_heatmap_page():
+    st.title("Global Economics – Correlation Heatmap")
 
-# Select GDP or inflation to build heatmap
-metric = st.radio(
-    "Select a metric:",
-    ["gdp_growth", "inflation"],
-    format_func=lambda m: "GDP growth" if m == "gdp_growth" else "Inflation"
-)
-#toggle between single year and miltiple years
-mode = st.radio(
-    "Select correlation mode:",
-    ["Single year (±1 year window)", "Year range"]
-)
-
-min_year = int(df["year"].min())
-max_year = int(df["year"].max())
-
-if mode == "Year range":
-    year_range = st.slider(
-        "Select year range:",
-        min_year,
-        max_year,
-        (min_year, max_year)
+    # Select GDP or inflation to build heatmap
+    metric = st.radio(
+        "Select a metric:",
+        ["gdp_growth", "inflation"],
+        format_func=lambda m: "GDP growth" if m == "gdp_growth" else "Inflation"
     )
-    year_filter = (df["year"] >= year_range[0]) & (df["year"] <= year_range[1])
-    year_text = f"{year_range[0]}–{year_range[1]}"
-
-else:
-    selected_year = st.selectbox(
-        "Select centre year:",
-        sorted(df["year"].unique())
-    )
-    # use a small window around that year
-    start_year = max(min_year, selected_year - 1)
-    end_year = min(max_year, selected_year + 1)
-    year_filter = (df["year"] >= start_year) & (df["year"] <= end_year)
-    year_text = f"{selected_year} (window {start_year}–{end_year})"
-
-
-# ---- Country presets ----
-all_countries = sorted(df["country"].unique())
-
-group = st.selectbox(
-    "Quick country group:",
-    ["Custom selection", "BRICS", "G7", "Euro Area Core"]
-)
-
-groups = {
-    "BRICS": ["Brazil", "Russian Federation", "India", "China", "South Africa"],
-    "G7": ["United States", "United Kingdom", "Germany", "France", "Italy", "Canada", "Japan"],
-    "Euro Area Core": ["Germany", "France", "Belgium", "Netherlands", "Italy", "Spain"]
-}
-
-# Set default list depending on preset
-if group == "Custom selection":
-    default_list = ["United States", "China", "India", "Germany", "Brazil"]
-else:
-    default_list = [c for c in all_countries if c in groups[group]]
-
-# ---- Country multi-select ----
-selected_countries = st.multiselect(
-    "Select countries (at least 2):",
-    all_countries,
-    default=default_list
-)
-
-
-if len(selected_countries) < 2:
-    st.info("Please select at least two countries to display the heatmap.")
-    st.stop()
-
-df_sel=df[
-    (df["country"].isin(selected_countries)) &
-    year_filter
-    ].copy()
-
-if df_sel.empty:
-    st.warning(f"No data available for the selected countries {year_text}. Please adjust your selection.")
-    st.stop()
-
-missing_pct = df_sel[metric].isna().mean() * 100
-st.caption(f"Missing{metric.replace('_', ' ')} data in this selection: {missing_pct:.1f}%")
-
-st.download_button(
-    "Download filtered data as CSV",
-    df_sel.to_csv(index=False).encode('utf-8'),
-    file_name=f"filtered_data_{metric}_{year_text}.csv",
-    mime="text/csv"
-)
-
-# Pivot data so each country becomes a column
-pivot = df_sel.pivot(index="year", columns="country", values=metric)
-
-pivot = pivot.dropna(axis=1, how="all")
-
-if pivot.shape[1] < 2:
-    st.warning("Not enough data to compute correlations for the selected countries.")
-    st.stop()
-
-# Compute correlation between countries
-corr = pivot.corr()
-
-if corr.isna().all().all():
-    st.warning("Correlation could not be computed (too many missing values). Try different years or countries.")
-
-show_numbers=st.checkbox("Show correlation values on heatmap", value=True)
-
-fig, ax=plt.subplots(figsize=(10, 8))
-sns.heatmap(
-    corr,
-    annot=show_numbers,
-    fmt=".2f",
-    cmap="coolwarm",
-    vmin=-1,
-    vmax=1,
-    square=True,
-    cbar_kws={"label": "Pearson correlation coefficient"},
-    ax=ax
-)
-ax.set_title(f"Correlation heatmap for {metric.replace('_', ' ').title()}({year_text})")
-#Insight summary of strongest / weakest correlations 
-
-corr_for_pairs = corr.copy()
-corr_for_pairs.index.name = "Country A"
-corr_for_pairs.columns.name = "Country B"
-
-# Remove diagonal (self-correlations)
-np.fill_diagonal(corr_for_pairs.values, np.nan)
-
-
-mask = np.triu(np.ones_like(corr_for_pairs, dtype=bool))
-corr_lower = corr_for_pairs.mask(mask)
-
-
-corr_pairs = (
-    corr_lower.stack()
-    .reset_index(name="corr_value")
-    .dropna(subset=["corr_value"])
-)
-
-
-if not corr_pairs.empty:
-   
-    best = corr_pairs.loc[corr_pairs["corr_value"].idxmax()]
-
-  
-    worst = corr_pairs.loc[corr_pairs["corr_value"].idxmin()]
-
-    st.write(
-        f"**Strongest positive correlation:** "
-        f"{best['Country A']} & {best['Country B']} ({best['corr_value']:.2f})"
-    )
-    st.write(
-        f"**Weakest (most negative) correlation:** "
-        f"{worst['Country A']} & {worst['Country B']} ({worst['corr_value']:.2f})"
+    #toggle between single year and miltiple years
+    mode = st.radio(
+        "Select correlation mode:",
+        ["Single year (±1 year window)", "Year range"]
     )
 
+    min_year = int(df["year"].min())
+    max_year = int(df["year"].max())
 
+    if mode == "Year range":
+        year_range = st.slider(
+            "Select year range:",
+            min_year,
+            max_year,
+            (min_year, max_year)
+        )
+        year_filter = (df["year"] >= year_range[0]) & (df["year"] <= year_range[1])
+        year_text = f"{year_range[0]}–{year_range[1]}"
 
-
-
-st.pyplot(fig)
-
-# ---- Pairwise scatter plot ----
-st.subheader("Explore relationship between two countries")
-
-pair = st.multiselect(
-    "Select exactly two countries to compare:",
-    selected_countries,
-    max_selections=2
-)
-
-if len(pair) == 2:
-    # Prepare a dataset with just the two selected countries
-    pair_df = df_sel[df_sel["country"].isin(pair)].copy()
-    pair_pivot = pair_df.pivot(index="year", columns="country", values=metric)
-
-    # Drop years with missing data
-    pair_pivot = pair_pivot.dropna()
-
-    if pair_pivot.empty:
-        st.warning("Not enough overlapping data to compare these two countries.")
     else:
-        fig2, ax2 = plt.subplots(figsize=(7, 5))
-        ax2.scatter(
-            pair_pivot[pair[0]],
-            pair_pivot[pair[1]],
-            alpha=0.7
+        selected_year = st.selectbox(
+            "Select centre year:",
+            sorted(df["year"].unique())
+        )
+        # use a small window around that year
+        start_year = max(min_year, selected_year - 1)
+        end_year = min(max_year, selected_year + 1)
+        year_filter = (df["year"] >= start_year) & (df["year"] <= end_year)
+        year_text = f"{selected_year} (window {start_year}–{end_year})"
+
+
+    # ---- Country presets ----
+    all_countries = sorted(df["country"].unique())
+
+    group = st.selectbox(
+        "Quick country group:",
+        ["Custom selection", "BRICS", "G7", "Euro Area Core"]
+    )
+
+    groups = {
+        "BRICS": ["Brazil", "Russian Federation", "India", "China", "South Africa"],
+        "G7": ["United States", "United Kingdom", "Germany", "France", "Italy", "Canada", "Japan"],
+        "Euro Area Core": ["Germany", "France", "Belgium", "Netherlands", "Italy", "Spain"]
+    }
+
+    # Set default list depending on preset
+    if group == "Custom selection":
+        default_list = ["United States", "China", "India", "Germany", "Brazil"]
+    else:
+        default_list = [c for c in all_countries if c in groups[group]]
+
+    # ---- Country multi-select ----
+    selected_countries = st.multiselect(
+        "Select countries (at least 2):",
+        all_countries,
+        default=default_list
+    )
+
+
+    if len(selected_countries) < 2:
+        st.info("Please select at least two countries to display the heatmap.")
+        st.stop()
+
+    df_sel=df[
+        (df["country"].isin(selected_countries)) &
+        year_filter
+        ].copy()
+
+    if df_sel.empty:
+        st.warning(f"No data available for the selected countries {year_text}. Please adjust your selection.")
+        st.stop()
+
+    missing_pct = df_sel[metric].isna().mean() * 100
+    st.caption(f"Missing{metric.replace('_', ' ')} data in this selection: {missing_pct:.1f}%")
+
+    st.download_button(
+        "Download filtered data as CSV",
+        df_sel.to_csv(index=False).encode('utf-8'),
+        file_name=f"filtered_data_{metric}_{year_text}.csv",
+        mime="text/csv"
+    )
+
+    # Pivot data so each country becomes a column
+    pivot = df_sel.pivot(index="year", columns="country", values=metric)
+
+    pivot = pivot.dropna(axis=1, how="all")
+
+    if pivot.shape[1] < 2:
+        st.warning("Not enough data to compute correlations for the selected countries.")
+        st.stop()
+
+    # Compute correlation between countries
+    corr = pivot.corr()
+
+    if corr.isna().all().all():
+        st.warning("Correlation could not be computed (too many missing values). Try different years or countries.")
+
+    show_numbers=st.checkbox("Show correlation values on heatmap", value=True)
+
+    fig, ax=plt.subplots(figsize=(10, 8))
+    sns.heatmap(
+        corr,
+        annot=show_numbers,
+        fmt=".2f",
+        cmap="coolwarm",
+        vmin=-1,
+        vmax=1,
+        square=True,
+        cbar_kws={"label": "Pearson correlation coefficient"},
+        ax=ax
+    )
+    ax.set_title(f"Correlation heatmap for {metric.replace('_', ' ').title()}({year_text})")
+    #Insight summary of strongest / weakest correlations 
+
+    corr_for_pairs = corr.copy()
+    corr_for_pairs.index.name = "Country A"
+    corr_for_pairs.columns.name = "Country B"
+
+    # Remove diagonal (self-correlations)
+    np.fill_diagonal(corr_for_pairs.values, np.nan)
+
+
+    mask = np.triu(np.ones_like(corr_for_pairs, dtype=bool))
+    corr_lower = corr_for_pairs.mask(mask)
+
+
+    corr_pairs = (
+        corr_lower.stack()
+        .reset_index(name="corr_value")
+        .dropna(subset=["corr_value"])
+    )
+
+
+    if not corr_pairs.empty:
+    
+        best = corr_pairs.loc[corr_pairs["corr_value"].idxmax()]
+
+    
+        worst = corr_pairs.loc[corr_pairs["corr_value"].idxmin()]
+
+        st.write(
+            f"**Strongest positive correlation:** "
+            f"{best['Country A']} & {best['Country B']} ({best['corr_value']:.2f})"
+        )
+        st.write(
+            f"**Weakest (most negative) correlation:** "
+            f"{worst['Country A']} & {worst['Country B']} ({worst['corr_value']:.2f})"
         )
 
-        # Fit a trend line
-        import numpy as np
-        x = pair_pivot[pair[0]]
-        y = pair_pivot[pair[1]]
-        m, b = np.polyfit(x, y, 1)
-        ax2.plot(x, m*x + b, color="red", linewidth=1.5, label="Trend line")
-
-        ax2.set_xlabel(f"{pair[0]} ({metric.replace('_', ' ')})")
-        ax2.set_ylabel(f"{pair[1]} ({metric.replace('_', ' ')})")
-        ax2.set_title(f"{metric.replace('_',' ').title()} relationship between {pair[0]} and {pair[1]}")
-        ax2.legend()
-
-        st.pyplot(fig2)
 
 
 
 
+    st.pyplot(fig)
 
+    # ---- Pairwise scatter plot ----
+    st.subheader("Explore relationship between two countries")
 
+    pair = st.multiselect(
+        "Select exactly two countries to compare:",
+        selected_countries,
+        max_selections=2
+    )
 
-st.caption(
-    f"Correlations are Pearson correlations of {metric.replace('_', ' ')} "
-    f"between selected countries using data from {year_text}."
-)
+    if len(pair) == 2:
+        # Prepare a dataset with just the two selected countries
+        pair_df = df_sel[df_sel["country"].isin(pair)].copy()
+        pair_pivot = pair_df.pivot(index="year", columns="country", values=metric)
 
+        # Drop years with missing data
+        pair_pivot = pair_pivot.dropna()
+
+        if pair_pivot.empty:
+            st.warning("Not enough overlapping data to compare these two countries.")
+        else:
+            fig2, ax2 = plt.subplots(figsize=(7, 5))
+            ax2.scatter(
+                pair_pivot[pair[0]],
+                pair_pivot[pair[1]],
+                alpha=0.7
+            )
+
+            # Fit a trend line
+            import numpy as np
+            x = pair_pivot[pair[0]]
+            y = pair_pivot[pair[1]]
+            m, b = np.polyfit(x, y, 1)
+            ax2.plot(x, m*x + b, color="red", linewidth=1.5, label="Trend line")
+
+            ax2.set_xlabel(f"{pair[0]} ({metric.replace('_', ' ')})")
+            ax2.set_ylabel(f"{pair[1]} ({metric.replace('_', ' ')})")
+            ax2.set_title(f"{metric.replace('_',' ').title()} relationship between {pair[0]} and {pair[1]}")
+            ax2.legend()
+
+            st.pyplot(fig2)
+    st.caption(
+        f"Correlations are Pearson correlations of {metric.replace('_', ' ')} "
+        f"between selected countries using data from {year_text}."
+    )
+
+if__name__ == "Main_Dashboard":
+    render_heatmap_page()
