@@ -1,8 +1,9 @@
+import numpy as np
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
+
 
 # Load your dataset
 df = pd.read_csv(r'C:\Users\lorca\Downloads\Programming project\DATA\macro_data.csv')
@@ -201,7 +202,6 @@ def render_heatmap_page():
             )
 
             # Fit a trend line
-            import numpy as np
             x = pair_pivot[pair[0]]
             y = pair_pivot[pair[1]]
             m, b = np.polyfit(x, y, 1)
