@@ -60,166 +60,166 @@ def compute_inflation_rates(level_series: pd.Series) -> pd.DataFrame:
 
 
 
-
-st.set_page_config(
-    page_title="USD Inflation Dashboard (FRED)",
-    layout="wide",
-)
-
-st.title("📈 USD Inflation Dashboard (FRED)")
-
-st.markdown(
+def render_inf_page():
+    st.set_page_config(
+        page_title="USD Inflation Dashboard (FRED)",
+        layout="wide",
+    )
+    
+    st.title("📈 USD Inflation Dashboard (FRED)")
+    
+    st.markdown(
+        """
+    This dashboard pulls **USD inflation-related data** directly from **FRED** using
+    `pandas-datareader`.
+    
+    **Main default series:**  
+    - `CPIAUCSL` – Consumer Price Index for All Urban Consumers (All Items, Seasonally Adjusted)
+    
+    You can switch to Core CPI, PCE, Core PCE, or 5-year breakeven inflation via the sidebar.
     """
-This dashboard pulls **USD inflation-related data** directly from **FRED** using
-`pandas-datareader`.
-
-**Main default series:**  
-- `CPIAUCSL` – Consumer Price Index for All Urban Consumers (All Items, Seasonally Adjusted)
-
-You can switch to Core CPI, PCE, Core PCE, or 5-year breakeven inflation via the sidebar.
-"""
-)
-
-st.sidebar.header("Data settings")
-
-series_label = st.sidebar.selectbox(
-    "FRED series",
-    options=list(FRED_SERIES.keys()),
-    index=0,
-)
-
-series_id = FRED_SERIES[series_label]
-
-min_start_date = dt.date(1950, 1, 1)
-default_start = dt.date.today().replace(year=dt.date.today().year - 20)
-
-start_date = st.sidebar.date_input(
-    "Start date",
-    value=default_start,
-    min_value=min_start_date,
-)
-
-end_date = st.sidebar.date_input(
-    "End date",
-    value=dt.date.today(),
-)
-
-show_table = st.sidebar.checkbox("Show data table", value=False)
-
-rolling_window = st.sidebar.slider(
-    "Rolling average window (months)",
-    min_value=1,
-    max_value=24,
-    value=6,
-)
-
-if start_date >= end_date:
-    st.error("Start date must be before end date.")
-    st.stop()
-
-with st.spinner(f"Fetching {series_id} from FRED..."):
-    level_series = fetch_fred_series(series_id, start_date, end_date)
-
-if level_series.empty:
-    st.error(
-        f"No data returned for FRED series `{series_id}`. "
-        "Check your API key and date range."
     )
-    st.stop()
-
-df = compute_inflation_rates(level_series)
-
-if df.empty:
-    st.error("Unable to compute inflation rates (empty dataset after processing).")
-    st.stop()
-
-latest_row = df.dropna().iloc[-1]
-latest_date = latest_row.name.date()
-latest_yoy = latest_row["YoY_%"]
-latest_mom = latest_row["MoM_%"]
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric(
-        label=f"{series_label} (latest level)",
-        value=f"{latest_row['IndexLevel']:.2f}",
+    
+    st.sidebar.header("Data settings")
+    
+    series_label = st.sidebar.selectbox(
+        "FRED series",
+        options=list(FRED_SERIES.keys()),
+        index=0,
     )
-
-with col2:
-    st.metric(
-        label=f"YoY % (as of {latest_date})",
-        value=f"{latest_yoy:.2f}%",
+    
+    series_id = FRED_SERIES[series_label]
+    
+    min_start_date = dt.date(1950, 1, 1)
+    default_start = dt.date.today().replace(year=dt.date.today().year - 20)
+    
+    start_date = st.sidebar.date_input(
+        "Start date",
+        value=default_start,
+        min_value=min_start_date,
     )
-
-with col3:
-    st.metric(
-        label=f"MoM % (as of {latest_date})",
-        value=f"{latest_mom:.2f}%",
+    
+    end_date = st.sidebar.date_input(
+        "End date",
+        value=dt.date.today(),
     )
-
-st.markdown("---")
-
-tab1, tab2, tab3 = st.tabs(["📊 YoY Inflation", "📈 Index Level", "📉 MoM Change"])
-
-df_reset = df.reset_index().rename(columns={"index": "DATE"})
-
-with tab1:
-    fig_yoy = px.line(
-        df_reset,
-        x="DATE",
-        y="YoY_%",
-        title=f"Year-over-Year Inflation Rate (%) – {series_label}",
-        labels={"DATE": "Date", "YoY_%": "YoY Inflation (%)"},
+    
+    show_table = st.sidebar.checkbox("Show data table", value=False)
+    
+    rolling_window = st.sidebar.slider(
+        "Rolling average window (months)",
+        min_value=1,
+        max_value=24,
+        value=6,
     )
-    df_reset["YoY_rolling"] = df_reset["YoY_%"].rolling(window=rolling_window).mean()
-
-fig_yoy.add_scatter(
-    x=df_reset["DATE"],
-    y=df_reset["YoY_rolling"],
-    mode="lines",
-    name=f"YoY {rolling_window}-month avg",
-)
-st.plotly_chart(fig_yoy, use_container_width=True)
-
-with tab2:
-    fig_level = px.line(
-        df_reset,
-        x="DATE",
-        y="IndexLevel",
-        title=f"Index Level – {series_label}",
-        labels={"DATE": "Date", "IndexLevel": "Index Level"},
+    
+    if start_date >= end_date:
+        st.error("Start date must be before end date.")
+        st.stop()
+    
+    with st.spinner(f"Fetching {series_id} from FRED..."):
+        level_series = fetch_fred_series(series_id, start_date, end_date)
+    
+    if level_series.empty:
+        st.error(
+            f"No data returned for FRED series `{series_id}`. "
+            "Check your API key and date range."
+        )
+        st.stop()
+    
+    df = compute_inflation_rates(level_series)
+    
+    if df.empty:
+        st.error("Unable to compute inflation rates (empty dataset after processing).")
+        st.stop()
+    
+    latest_row = df.dropna().iloc[-1]
+    latest_date = latest_row.name.date()
+    latest_yoy = latest_row["YoY_%"]
+    latest_mom = latest_row["MoM_%"]
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric(
+            label=f"{series_label} (latest level)",
+            value=f"{latest_row['IndexLevel']:.2f}",
+        )
+    
+    with col2:
+        st.metric(
+            label=f"YoY % (as of {latest_date})",
+            value=f"{latest_yoy:.2f}%",
+        )
+    
+    with col3:
+        st.metric(
+            label=f"MoM % (as of {latest_date})",
+            value=f"{latest_mom:.2f}%",
+        )
+    
+    st.markdown("---")
+    
+    tab1, tab2, tab3 = st.tabs(["📊 YoY Inflation", "📈 Index Level", "📉 MoM Change"])
+    
+    df_reset = df.reset_index().rename(columns={"index": "DATE"})
+    
+    with tab1:
+        fig_yoy = px.line(
+            df_reset,
+            x="DATE",
+            y="YoY_%",
+            title=f"Year-over-Year Inflation Rate (%) – {series_label}",
+            labels={"DATE": "Date", "YoY_%": "YoY Inflation (%)"},
+        )
+        df_reset["YoY_rolling"] = df_reset["YoY_%"].rolling(window=rolling_window).mean()
+    
+    fig_yoy.add_scatter(
+        x=df_reset["DATE"],
+        y=df_reset["YoY_rolling"],
+        mode="lines",
+        name=f"YoY {rolling_window}-month avg",
     )
-    df_reset["Index_rolling"] = df_reset["IndexLevel"].rolling(window=rolling_window).mean()
-
-fig_level.add_scatter(
-    x=df_reset["DATE"],
-    y=df_reset["Index_rolling"],
-    mode="lines",
-    name=f"Index {rolling_window}-month avg",
-)
-st.plotly_chart(fig_level, use_container_width=True)
-
-with tab3:
-    fig_mom = px.line(
-        df_reset,
-        x="DATE",
-        y="MoM_%",
-        title=f"Month-over-Month Change (%) – {series_label}",
-        labels={"DATE": "Date", "MoM_%": "MoM Change (%)"},
+    st.plotly_chart(fig_yoy, use_container_width=True)
+    
+    with tab2:
+        fig_level = px.line(
+            df_reset,
+            x="DATE",
+            y="IndexLevel",
+            title=f"Index Level – {series_label}",
+            labels={"DATE": "Date", "IndexLevel": "Index Level"},
+        )
+        df_reset["Index_rolling"] = df_reset["IndexLevel"].rolling(window=rolling_window).mean()
+    
+    fig_level.add_scatter(
+        x=df_reset["DATE"],
+        y=df_reset["Index_rolling"],
+        mode="lines",
+        name=f"Index {rolling_window}-month avg",
     )
-    df_reset["MoM_rolling"] = df_reset["MoM_%"].rolling(window=rolling_window).mean()
-
-fig_mom.add_scatter(
-    x=df_reset["DATE"],
-    y=df_reset["MoM_rolling"],
-    mode="lines",
-    name=f"MoM {rolling_window}-month avg",
-)
-st.plotly_chart(fig_mom, use_container_width=True)
-
-if show_table:
-    st.dataframe(df.tail(200))
-
-    st.subheader("Underlying data")
-    st.dataframe(df.tail(200)) 
+    st.plotly_chart(fig_level, use_container_width=True)
+    
+    with tab3:
+        fig_mom = px.line(
+            df_reset,
+            x="DATE",
+            y="MoM_%",
+            title=f"Month-over-Month Change (%) – {series_label}",
+            labels={"DATE": "Date", "MoM_%": "MoM Change (%)"},
+        )
+        df_reset["MoM_rolling"] = df_reset["MoM_%"].rolling(window=rolling_window).mean()
+    
+    fig_mom.add_scatter(
+        x=df_reset["DATE"],
+        y=df_reset["MoM_rolling"],
+        mode="lines",
+        name=f"MoM {rolling_window}-month avg",
+    )
+    st.plotly_chart(fig_mom, use_container_width=True)
+    
+    if show_table:
+        st.dataframe(df.tail(200))
+    
+        st.subheader("Underlying data")
+        st.dataframe(df.tail(200)) 
